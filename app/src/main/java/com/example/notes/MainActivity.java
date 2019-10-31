@@ -9,6 +9,9 @@ import com.google.android.material.floatingactionbutton.FloatingActionButton;
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.Toolbar;
+import androidx.recyclerview.widget.DividerItemDecoration;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
 import android.view.View;
 import android.view.Menu;
@@ -26,15 +29,40 @@ public class MainActivity extends AppCompatActivity {
     public static final int ADD_NOTE_REQUEST = 1;
     private String notesFile = "notes.txt";
     private LinkedList<Note> notes = new LinkedList<>();
+    private NoteAdapter noteAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        Toolbar toolbar = findViewById(R.id.toolbar);
-        setSupportActionBar(toolbar);
-        initFab();
+        initToolbar();
         readNotes();
+        initRecyclerView();
+        initFab();
+    }
+
+    private void initToolbar() {
+        Toolbar toolbar = findViewById(R.id.toolbar);
+
+        setSupportActionBar(toolbar);
+        setTitle(R.string.app_name);
+        getSupportActionBar().setDisplayShowTitleEnabled(true);
+    }
+
+    private void initRecyclerView() {
+        noteAdapter = new NoteAdapter(notes);
+        LinearLayoutManager layoutManager = new LinearLayoutManager(this);
+        RecyclerView recyclerView = findViewById(R.id.recycler_view);
+
+        DividerItemDecoration dividerItemDecoration = new DividerItemDecoration(recyclerView.getContext(),
+                layoutManager.getOrientation());
+
+        dividerItemDecoration.setDrawable(getDrawable(R.drawable.separator_shape));
+        noteAdapter.setNotes(notes);
+        recyclerView.addItemDecoration(dividerItemDecoration);
+        recyclerView.setLayoutManager(layoutManager);
+        recyclerView.setHasFixedSize(true);
+        recyclerView.setAdapter(noteAdapter);
     }
 
     private void initFab() {
@@ -85,11 +113,13 @@ public class MainActivity extends AppCompatActivity {
         try (FileOutputStream fileOutput = this.openFileOutput(notesFile, Context.MODE_PRIVATE);
              ObjectOutputStream objectOutput = new ObjectOutputStream(fileOutput)) {
 
+            noteAdapter.setNotes(notes);
             objectOutput.writeObject(notes);
-            Toast.makeText(this, "Notes saved", Toast.LENGTH_SHORT).show();
+
+            Toast.makeText(getApplicationContext(), "Note saved", Toast.LENGTH_SHORT).show();
 
         } catch (IOException e) {
-            Toast.makeText(this, "File not found", Toast.LENGTH_LONG).show();
+            Toast.makeText(getApplicationContext(), "File not found", Toast.LENGTH_LONG).show();
         }
     }
 
@@ -100,7 +130,7 @@ public class MainActivity extends AppCompatActivity {
             notes = (LinkedList<Note>) inputStream.readObject();
 
         } catch (IOException e) {
-           Toast.makeText(this, "File not found", Toast.LENGTH_LONG).show();
+           Toast.makeText(getApplicationContext(), "File not found", Toast.LENGTH_LONG).show();
         } catch (ClassNotFoundException e) {
             e.printStackTrace();
         }
