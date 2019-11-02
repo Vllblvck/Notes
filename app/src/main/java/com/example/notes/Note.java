@@ -1,14 +1,22 @@
 package com.example.notes;
 
 import java.io.Serializable;
-import java.util.Date;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.Calendar;
 
 public class Note implements Serializable {
     private String content;
-    private Date creationDate;
+    private String creationDate;
+    private String exactCreationDate;
 
     public Note(String content) {
         this.content = content;
+        Calendar calendar = Calendar.getInstance();
+        SimpleDateFormat dateTimeFormat = new SimpleDateFormat("yyyy/MM/dd HH:mm:ss");
+        DateFormat dateFormat = DateFormat.getDateInstance();
+        exactCreationDate = dateTimeFormat.format(calendar.getTime());
+        creationDate = dateFormat.format(calendar.getTime());
     }
 
     public String getContent() {
@@ -19,11 +27,17 @@ public class Note implements Serializable {
         this.content = content;
     }
 
-    public Date getCreationDate() {
+    public String getCreationDate() {
         return creationDate;
     }
 
-    public void setCreationDate(Date creationDate) {
+    public String getExactCreationDate() {
+        return exactCreationDate;
+    }
+
+    public void setCreationDate(String creationDate) {
         this.creationDate = creationDate;
     }
+
+    //TODO wyswietlanie czesci daty (po chuj te 2 zmienne)
 }
