@@ -7,8 +7,8 @@ import java.util.Calendar;
 
 public class Note implements Serializable {
     private String content;
-    private String creationDate;
     private String exactCreationDate;
+    private String creationDate;
 
     public Note(String content) {
         this.content = content;
@@ -38,6 +38,4 @@ public class Note implements Serializable {
     public void setCreationDate(String creationDate) {
         this.creationDate = creationDate;
     }
-
-    //TODO wyswietlanie czesci daty (po chuj te 2 zmienne)
 }

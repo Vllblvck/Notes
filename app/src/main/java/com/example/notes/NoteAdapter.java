@@ -22,6 +22,7 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NoteViewHolder
     private NoteListener clickListener;
     private boolean multiSelect = false;
     private ActionMode actionMode;
+
     private ActionMode.Callback actionModeCallback = new ActionMode.Callback() {
         @Override
         public boolean onCreateActionMode(ActionMode mode, Menu menu) {
@@ -39,7 +40,7 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NoteViewHolder
         public boolean onActionItemClicked(ActionMode mode, MenuItem item) {
 
             if (item.getItemId() == R.id.action_delete) {
-                clickListener.onNoteDelete(selectedNotes);
+                clickListener.onNotesDelete(selectedNotes);
                 mode.finish();
                 return true;
             }
@@ -78,8 +79,7 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NoteViewHolder
         }
     };
 
-    public NoteAdapter(List<Note> notes, NoteListener clickListener) {
-        this.notes = notes;
+    public NoteAdapter(NoteListener clickListener) {
         this.clickListener = clickListener;
     }
 
@@ -93,16 +93,17 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NoteViewHolder
     }
 
     @Override
-    public int getItemCount() {
-        return notes.size();
-    }
-
-    @Override
     public void onBindViewHolder(@NonNull NoteViewHolder holder, final int position) {
         holder.content.setText(notes.get(position).getContent());
         holder.creationDate.setText(notes.get(position).getCreationDate());
         checkBoxes.add(holder.checkBox);
     }
+
+    @Override
+    public int getItemCount() {
+        return notes.size();
+    }
+
 
     private void startActionMode(View view) {
         if (actionMode != null) {
@@ -145,9 +146,9 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NoteViewHolder
     }
 
     public interface NoteListener {
-        void onNoteClick(int position);
+        void onNoteClick(Note note);
 
-        void onNoteDelete(List<Note> toDelete);
+        void onNotesDelete(List<Note> toDelete);
     }
 
     public class NoteViewHolder extends RecyclerView.ViewHolder {
@@ -166,7 +167,7 @@ public class NoteAdapter extends RecyclerView.Adapter<NoteAdapter.NoteViewHolder
                 @Override
                 public void onClick(View view) {
                     if (!multiSelect) {
-                        clickListener.onNoteClick(getAdapterPosition());
+                        clickListener.onNoteClick(notes.get(getAdapterPosition()));
                     } else {
                         selectItem(getAdapterPosition(), checkBox);
                     }

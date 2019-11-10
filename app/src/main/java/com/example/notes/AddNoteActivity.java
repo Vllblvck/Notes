@@ -1,8 +1,5 @@
 package com.example.notes;
 
-import androidx.appcompat.app.AppCompatActivity;
-import androidx.appcompat.widget.Toolbar;
-
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
@@ -12,6 +9,9 @@ import android.view.MenuItem;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.TextView;
+
+import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.Toolbar;
 
 import java.text.DateFormat;
 import java.util.Calendar;
@@ -26,20 +26,20 @@ public class AddNoteActivity extends AppCompatActivity {
         setContentView(R.layout.activity_add_note);
         setTitle(R.string.string_edit_note);
         noteEditText = findViewById(R.id.note_content);
-        initToolbar();
+        buildToolbar();
         checkRequest();
     }
 
-    private void initToolbar() {
+    private void buildToolbar() {
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         getSupportActionBar().setDisplayHomeAsUpEnabled(true);
     }
 
     private void checkRequest() {
+        TextView creationDate = findViewById(R.id.note_date);
         Intent intent = getIntent();
         int requestCode = intent.getExtras().getInt(MainActivity.EXTRA_REQUEST);
-        TextView creationDate = findViewById(R.id.note_date);
 
         if (requestCode == MainActivity.EDIT_NOTE_REQUEST) {
             note = (Note) intent.getExtras().getSerializable(MainActivity.EXTRA_NOTE);
@@ -48,12 +48,17 @@ public class AddNoteActivity extends AppCompatActivity {
         }
 
         if (requestCode == MainActivity.ADD_NOTE_REQUEST) {
+            creationDate.setText(getDateString());
             noteEditText.requestFocus();
-            Calendar calendar = Calendar.getInstance();
-            DateFormat dateFormat = DateFormat.getDateInstance();
-            creationDate.setText(dateFormat.format(calendar.getTime()));
             showKeyboard();
         }
+    }
+
+    private String getDateString() {
+        Calendar calendar = Calendar.getInstance();
+        DateFormat dateFormat = DateFormat.getDateInstance();
+
+        return dateFormat.format(calendar.getTime());
     }
 
     @Override
@@ -78,30 +83,28 @@ public class AddNoteActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
+    private void saveData() {
+        String noteContent = noteEditText.getText().toString();
+
+        if (note != null) {
+            note.setContent(noteContent);
+            note.setCreationDate(getDateString());
+        } else {
+            note = new Note(noteContent);
+        }
+
+        Intent saveIntent = new Intent();
+        saveIntent.putExtra(MainActivity.EXTRA_NOTE, note);
+        setResult(Activity.RESULT_OK, saveIntent);
+        hideKeyboard();
+        finish();
+    }
+
     @Override
     public void onBackPressed() {
         Intent returnIntent = new Intent();
         setResult(Activity.RESULT_CANCELED, returnIntent);
         hideKeyboard();
-        finish();
-    }
-
-    private void saveData() {
-        Intent saveIntent = new Intent();
-        String noteContent = noteEditText.getText().toString();
-
-        if (note != null) {
-            note.setContent(noteContent);
-            Calendar calendar = Calendar.getInstance();
-            DateFormat dateFormat = DateFormat.getDateInstance();
-            note.setCreationDate(dateFormat.format(calendar.getTime()));
-        } else {
-            note = new Note(noteContent);
-        }
-
-        hideKeyboard();
-        saveIntent.putExtra(MainActivity.EXTRA_NOTE, note);
-        setResult(Activity.RESULT_OK, saveIntent);
         finish();
     }
 

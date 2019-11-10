@@ -19,7 +19,6 @@
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
-
     <EditText
         android:id="@+id/note_content"
         android:layout_width="0dp"
@@ -30,6 +29,7 @@
         android:background="@android:color/transparent"
         android:gravity="top|start"
         android:inputType="text"
+        android:labelFor="@id/note_content"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"

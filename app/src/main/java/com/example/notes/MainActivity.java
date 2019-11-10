@@ -6,10 +6,13 @@ import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.Filter;
+import android.widget.Filterable;
 import android.widget.Toast;
 
 import androidx.annotation.Nullable;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.SearchView;
 import androidx.appcompat.widget.Toolbar;
 import androidx.recyclerview.widget.DividerItemDecoration;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -22,37 +25,78 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
 
-public class MainActivity extends AppCompatActivity implements NoteAdapter.NoteListener {
-    public static final int ADD_NOTE_REQUEST = 1;
-    public static final int EDIT_NOTE_REQUEST = 2;
+public class MainActivity extends AppCompatActivity implements NoteAdapter.NoteListener, Filterable {
     public static final String EXTRA_REQUEST = "com.example.notes.EXTRA_REQUEST";
     public static final String EXTRA_NOTE = "com.example.notes.NOTE";
-    private String notesFile = "notes.txt";
+    public static final int ADD_NOTE_REQUEST = 1;
+    public static final int EDIT_NOTE_REQUEST = 2;
     private List<Note> notes = new LinkedList<>();
+    private String notesFile = "notes.txt";
     private NoteAdapter noteAdapter;
+    private Filter notesFilter = new Filter() {
+        @Override
+        protected FilterResults performFiltering(CharSequence constraint) {
+            List<Note> filteredList = new ArrayList<>();
+
+            if (constraint == null || constraint.length() == 0) {
+                filteredList.addAll(notes);
+            } else {
+                String filterPattern = constraint.toString().toLowerCase();
+
+                for (Note note : notes) {
+                    if (note.getContent().toLowerCase().contains(filterPattern)) {
+                        filteredList.add(note);
+                    }
+                }
+            }
+
+            FilterResults results = new FilterResults();
+            results.values = filteredList;
+
+            return results;
+        }
+
+        @Override
+        protected void publishResults(CharSequence constraint, FilterResults results) {
+            List<Note> filteredList = (List<Note>) results.values;
+            noteAdapter.setNotes(filteredList);
+        }
+    };
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        initToolbar();
-        readNotes();
-        initRecyclerView();
-        initFab();
+        readNotesFromFile();
+        buildToolbar();
+        buildRecyclerView();
+        buildFab();
     }
 
-    private void initToolbar() {
+    private void readNotesFromFile() {
+        try (FileInputStream fileInput = this.openFileInput(notesFile);
+             ObjectInputStream inputStream = new ObjectInputStream(fileInput)) {
+
+            notes = (LinkedList<Note>) inputStream.readObject();
+
+        } catch (ClassNotFoundException | IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void buildToolbar() {
         Toolbar toolbar = findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
         setTitle(R.string.app_name);
         getSupportActionBar().setDisplayShowTitleEnabled(true);
     }
 
-    private void initRecyclerView() {
-        noteAdapter = new NoteAdapter(notes, this);
+    private void buildRecyclerView() {
+        noteAdapter = new NoteAdapter(this);
         noteAdapter.setNotes(notes);
 
         LinearLayoutManager layoutManager = new LinearLayoutManager(this);
@@ -68,7 +112,7 @@ public class MainActivity extends AppCompatActivity implements NoteAdapter.NoteL
         recyclerView.setAdapter(noteAdapter);
     }
 
-    private void initFab() {
+    private void buildFab() {
         FloatingActionButton fab = findViewById(R.id.fab);
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -78,27 +122,6 @@ public class MainActivity extends AppCompatActivity implements NoteAdapter.NoteL
                 startActivityForResult(intent, ADD_NOTE_REQUEST);
             }
         });
-    }
-
-    @Override
-    public void onNoteClick(int position) {
-        Intent intent = new Intent(this, AddNoteActivity.class);
-        intent.putExtra(EXTRA_REQUEST, EDIT_NOTE_REQUEST);
-        intent.putExtra(EXTRA_NOTE, notes.get(position));
-        startActivityForResult(intent, EDIT_NOTE_REQUEST);
-    }
-
-    @Override
-    public void onNoteDelete(List<Note> toDelete) {
-        for (int i = 0; i < notes.size(); i++) {
-            for (int j = 0; j < toDelete.size(); j++) {
-                if (notes.get(i).getExactCreationDate().
-                        equals(toDelete.get(j).getExactCreationDate())) {
-                    notes.remove(i);
-                }
-            }
-        }
-        saveNotes();
     }
 
     @Override
@@ -124,6 +147,14 @@ public class MainActivity extends AppCompatActivity implements NoteAdapter.NoteL
         }
     }
 
+    @Override
+    public void onNoteClick(Note note) {
+        Intent intent = new Intent(this, AddNoteActivity.class);
+        intent.putExtra(EXTRA_REQUEST, EDIT_NOTE_REQUEST);
+        intent.putExtra(EXTRA_NOTE, note);
+        startActivityForResult(intent, EDIT_NOTE_REQUEST);
+    }
+
     private void saveNotes() {
         try (FileOutputStream fileOutput = this.openFileOutput(notesFile, Context.MODE_PRIVATE);
              ObjectOutputStream objectOutput = new ObjectOutputStream(fileOutput)) {
@@ -136,31 +167,43 @@ public class MainActivity extends AppCompatActivity implements NoteAdapter.NoteL
         }
     }
 
-    private void readNotes() {
-        try (FileInputStream fileInput = this.openFileInput(notesFile);
-             ObjectInputStream inputStream = new ObjectInputStream(fileInput)) {
-
-            notes = (LinkedList<Note>) inputStream.readObject();
-
-        } catch (ClassNotFoundException | IOException e) {
-            e.printStackTrace();
+    @Override
+    public void onNotesDelete(List<Note> toDelete) {
+        for (int i = 0; i < notes.size(); i++) {
+            for (int j = 0; j < toDelete.size(); j++) {
+                if (notes.get(i).getExactCreationDate().
+                        equals(toDelete.get(j).getExactCreationDate())) {
+                    notes.remove(i);
+                }
+            }
         }
+        saveNotes();
     }
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
         getMenuInflater().inflate(R.menu.menu_main, menu);
+        MenuItem searchItem = menu.findItem(R.id.action_search);
+        SearchView searchView = (SearchView) searchItem.getActionView();
+
+        searchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+            @Override
+            public boolean onQueryTextSubmit(String query) {
+                return false;
+            }
+
+            @Override
+            public boolean onQueryTextChange(String newText) {
+                getFilter().filter(newText);
+                return true;
+            }
+        });
+
         return true;
     }
 
     @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        int id = item.getItemId();
-
-        if (id == R.id.action_settings) {
-            return true;
-        }
-
-        return super.onOptionsItemSelected(item);
+    public Filter getFilter() {
+        return notesFilter;
     }
 }
