@@ -28,7 +28,6 @@
         android:layout_marginBottom="8dp"
         android:background="@android:color/transparent"
         android:gravity="top|start"
-        android:inputType="text"
         android:labelFor="@id/note_content"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
