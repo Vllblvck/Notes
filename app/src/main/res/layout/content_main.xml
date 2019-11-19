@@ -14,6 +14,8 @@
         android:layout_height="match_parent"
         android:paddingStart="8dp"
         android:paddingEnd="8dp"
+        android:clipToPadding="false"
+        android:paddingBottom="86dp"
         tools:listitem="@layout/note_view_holder" />
 
 </androidx.constraintlayout.widget.ConstraintLayout>

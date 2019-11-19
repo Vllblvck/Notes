@@ -33,14 +33,13 @@ class NoteRemoteViewsFactory implements RemoteViewsService.RemoteViewsFactory {
 
     @Override
     public void onCreate() {
-        NoteFileReader noteFileReader = new NoteFileReader(context);
-        notes.addAll(noteFileReader.readNotes());
+        NoteFileReader fileReader = new NoteFileReader(context);
+        notes.addAll(fileReader.readNotes());
     }
 
     @Override
     public void onDataSetChanged() {
-        NoteFileReader noteFileReader = new NoteFileReader(context);
-        notes.addAll(noteFileReader.readNotes());
+
     }
 
     @Override

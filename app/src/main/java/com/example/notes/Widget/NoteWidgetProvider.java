@@ -23,7 +23,6 @@ public class NoteWidgetProvider extends AppWidgetProvider {
             views.setEmptyView(R.id.widget_stack_view, R.id.widget_empty_view);
 
             appWidgetManager.updateAppWidget(appWidgetId, views);
-            appWidgetManager.notifyAppWidgetViewDataChanged(appWidgetIds, R.id.widget_stack_view);
         }
     }
 }

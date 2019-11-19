@@ -22,6 +22,7 @@ import com.example.notes.R;
 import com.google.android.material.floatingactionbutton.FloatingActionButton;
 
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity implements NoteAdapter.NoteListener, Filterable {
@@ -31,6 +32,7 @@ public class MainActivity extends AppCompatActivity implements NoteAdapter.NoteL
     public static final int EDIT_NOTE_REQUEST = 2;
     private List<Note> notes = new ArrayList<>();
     private NoteAdapter noteAdapter;
+    private NoteFileReader fileReader;
     private Filter notesFilter = new Filter() {
         @Override
         protected FilterResults performFiltering(CharSequence constraint) {
@@ -65,7 +67,8 @@ public class MainActivity extends AppCompatActivity implements NoteAdapter.NoteL
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
-        readNotes();
+        fileReader = new NoteFileReader(this);
+        notes.addAll(fileReader.readNotes());
         buildToolbar();
         buildRecyclerView();
         buildFab();
@@ -107,11 +110,6 @@ public class MainActivity extends AppCompatActivity implements NoteAdapter.NoteL
         });
     }
 
-    private void readNotes() {
-        NoteFileReader fileReader = new NoteFileReader(this);
-        notes.addAll(fileReader.readNotes());
-    }
-
     @Override
     public void onNoteClick(Note note) {
         Intent intent = new Intent(this, AddNoteActivity.class);
@@ -139,23 +137,30 @@ public class MainActivity extends AppCompatActivity implements NoteAdapter.NoteL
                 }
             }
 
-            noteAdapter.setNotes(notes);
-            saveNotes();
+            saveData();
         }
     }
 
     @Override
     public void onNotesDelete(List<Note> toDelete) {
-        for (int i = 0; i < notes.size(); i++) {
-            for (int j = 0; j < toDelete.size(); j++) {
-                if (notes.get(i).getExactCreationDate().
-                        equals(toDelete.get(j).getExactCreationDate())) {
-                    notes.remove(i);
+        Iterator<Note> notesIter = notes.iterator();
+
+        while (notesIter.hasNext()) {
+            Note note = notesIter.next();
+
+            for (Note delNote : toDelete) {
+                if (note.getExactCreationDate().equals(delNote.getExactCreationDate())) {
+                    notesIter.remove();
                 }
             }
         }
+
+        saveData();
+    }
+
+    private void saveData() {
         noteAdapter.setNotes(notes);
-        saveNotes();
+        fileReader.saveNotes(notes);
     }
 
     @Override
@@ -183,10 +188,5 @@ public class MainActivity extends AppCompatActivity implements NoteAdapter.NoteL
     @Override
     public Filter getFilter() {
         return notesFilter;
-    }
-
-    private void saveNotes() {
-        NoteFileReader fileReader = new NoteFileReader(this);
-        fileReader.saveNotes(notes);
     }
 }
